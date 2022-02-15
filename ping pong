@@ -1,0 +1,181 @@
+import pygame
+import random
+
+
+def game():
+
+    pygame.init()
+    pygame.font.init()
+    pygame.display.set_caption('PINGY PONGY')
+
+    WIDTH = 800
+    HEIGHT = 800
+    coor_x = 100
+    coor_y = 400
+
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
+    text_font = pygame.font.SysFont('Oldways', 25)
+    myfont = pygame.font.SysFont('Helvetica', 50)
+
+    # object colors in rgb
+    racket1_color = (211, 211, 211)
+    racket2_color = (211, 211, 211)
+    ball_color = (211, 211, 211)
+    background_color = (31, 31, 31)
+
+
+    # positions and dimensions of the objects - x coordinate, y coordinate, length, height
+    racket1_pos_size = [coor_x, coor_y, 10, 100]
+    racket2_pos_size = [WIDTH - coor_x, HEIGHT - coor_y, 10, 100]
+    racket1 = pygame.draw.rect(screen, racket1_color, racket1_pos_size)
+    racket2 = pygame.draw.rect(screen, racket2_color, racket2_pos_size)
+
+    # position of the ball - x,y coordinate of the centre
+    ball_pos_size = [WIDTH / 2, HEIGHT / 2]
+    ball = pygame.draw.circle(screen, ball_color, ball_pos_size, 10)
+
+    pygame.key.set_repeat(30)  # fps of rackets
+
+    game_over = False
+
+    clock = pygame.time.Clock()
+
+    # whether or not the game was started
+    global pressed #must be set to global so it can work in the def start()
+    pressed = False
+
+    # the definition of the starting position, rackets, etc.
+    def start():
+        #nonlocal and not global because the the variables are not in the global code but within the function above
+        nonlocal background_color, racket1, racket2, ball, ball_pos_size, ball_dx, ball_dy, racket1_color, racket1_pos_size, racket2_color, racket2_pos_size, ball_color
+        # object colors in rgb
+        racket1_color = (211, 211, 211)
+        racket2_color = (211, 211, 211)
+        ball_color = (211, 211, 211)
+        background_color = (31, 31, 31)
+
+        #the very first shot in every loop is slowed/under a different angle
+        if pressed == True:
+            # direction of the ball - how much is x respectively y changed in between two scenes
+            ball_dy, ball_dx = random.uniform(-1, 1), random.uniform(0.5, 1) * random.choice([-1, 1])
+
+        # positions and dimensions of the objects - x coordinate, y coordinate, length, height
+        racket1_pos_size = [coor_x, coor_y, 10, 100]
+        racket2_pos_size = [WIDTH - coor_x, HEIGHT - coor_y, 10, 100]
+        racket1 = pygame.draw.rect(screen, racket1_color, racket1_pos_size)
+        racket2 = pygame.draw.rect(screen, racket2_color, racket2_pos_size)
+
+        # position of the ball - x,y coordinate of the centre
+        ball_pos_size = [WIDTH / 2, HEIGHT / 2]
+        ball = pygame.draw.circle(screen, ball_color, ball_pos_size, 10)
+
+        pygame.key.set_repeat(30)  # fps of rackets
+
+
+    # direction of the ball - how much is x respectively y changed in between two scenes
+    ball_dx = 0
+    ball_dy = 0
+
+    player1_score = 0
+    player2_score = 0
+
+    start()
+
+    # game loop
+    while not game_over:
+
+        # process input and update game state
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                game_over = True
+
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    game_over = True
+                # starting the game and setting starting angle of the ball
+                elif (event.key == pygame.K_SPACE and pressed != True) or (
+                        event.key == pygame.K_DOWN and pressed != True) or (
+                        event.key == pygame.K_UP and pressed != True) or (
+                        event.key == pygame.K_w and pressed != True) or (event.key == pygame.K_s and pressed != True):
+                    pressed = True
+                    # direction of the ball - how much is x respectively y changed in between two scenes
+                    ball_dy, ball_dx = random.uniform(-1, 1), random.uniform(0.5, 1) * random.choice([-1, 1])
+
+                elif event.key == pygame.K_w:
+                    if racket1_pos_size[1] > 0:
+                        racket1_pos_size[1] -= 10
+                elif event.key == pygame.K_s:
+                    if racket1_pos_size[1] + racket1_pos_size[3] < HEIGHT:
+                        racket1_pos_size[1] += 10
+                elif event.key == pygame.K_UP:
+                    if racket2_pos_size[1] > 0:
+                        racket2_pos_size[1] -= 10
+                elif event.key == pygame.K_DOWN:
+                    if racket2_pos_size[1] + racket2_pos_size[3] < HEIGHT:
+                        racket2_pos_size[1] += 10
+
+        if ball_pos_size[1] > HEIGHT or ball_pos_size[1] < 0:
+            ball_dy = -ball_dy
+        if ball_pos_size[0] > WIDTH:
+            player1_score += 1
+            print(f'Player 1 scored - {player1_score} : {player2_score}')
+            start()
+        elif ball_pos_size[0] < 0:
+            player2_score += 1
+            print(f'Player 2 scored - {player1_score} : {player2_score}')
+            start()
+
+        # ball
+        ball_pos_size[0] = ball_pos_size[0] + ball_dx
+        ball_pos_size[1] = ball_pos_size[1] + ball_dy
+
+        #
+        if racket2.colliderect(ball):  # ked sa ball dotkne rakety 2, odrazi sa
+            ball_dx = -1
+            y_ball = ball_pos_size[1]
+            y_racket = racket2_pos_size[1]
+            racket_height = racket2_pos_size[3]
+            if y_ball - y_racket > racket_height / 2:
+                ball_dy = random.uniform(0.8, 1)
+            elif y_ball - y_racket < racket_height / 2:
+                ball_dy = random.uniform(-1, -0.8)
+            else:
+                ball_dy = 0
+
+        if racket1.colliderect(ball):
+            ball_dx = 1
+            y_ball = ball_pos_size[1]
+            y_racket = racket1_pos_size[1]
+            racket_height = racket1_pos_size[3]
+            if y_ball - y_racket > racket_height / 2:
+                ball_dy = random.uniform(0.8, 1)
+            elif y_ball - y_racket < racket_height / 2:
+                ball_dy = random.uniform(-1, -0.8)
+            else:
+                ball_dy = 0
+
+        screen.fill(background_color)
+
+        #score
+        text = myfont.render(f'{player1_score} {player2_score}', True, (221, 211, 211), (31, 31, 31))
+        text_rectangle = text.get_rect(center = (WIDTH/2, 40))
+        screen.blit(text, text_rectangle)
+
+        pygame.draw.aaline(screen, ball_color, (WIDTH / 2, 0), (WIDTH / 2, HEIGHT))
+
+        if pressed == False:
+            start_text = text_font.render(f'Press "SPACE" to start the game.', True, (221, 211, 211),(31, 31, 31))
+            text_pos = text.get_rect(center = (HEIGHT/2.8, 700))
+            screen.blit(start_text, text_pos)
+
+        # RENDER
+        racket1 = pygame.draw.rect(screen, racket1_color, racket1_pos_size)
+        racket2 = pygame.draw.rect(screen, racket2_color, racket2_pos_size)
+        ball = pygame.draw.circle(screen, ball_color, ball_pos_size, 8)
+
+        pygame.display.update()
+        clock.tick(220)
+game()
+pygame.quit()
